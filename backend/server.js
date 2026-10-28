@@ -10,6 +10,39 @@ const { promisify } = require("util");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const HEALTH_UPLOAD_DIR = path.join(__dirname, "health-uploads");
+
+fs.mkdirSync(HEALTH_UPLOAD_DIR, { recursive: true });
+
+const healthStorage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, HEALTH_UPLOAD_DIR);
+  },
+
+  filename: (req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    const uniqueName = `health-${Date.now()}-${require("crypto").randomUUID()}${extension}`;
+
+    callback(null, uniqueName);
+  },
+});
+
+const healthUpload = multer({
+  storage: healthStorage,
+
+  limits: {
+    fileSize: 25 * 1024 * 1024,
+    files: 1,
+  },
+
+  fileFilter: (req, file, callback) => {
+    if (allowedMimeTypes.has(file.mimetype)) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Unsupported image or video format."));
+  },
+});
 
 dotenv.config();
 
@@ -90,19 +123,9 @@ const upload = multer({
 // --------------------------------------------------
 
 const SYSTEM_PROMPT = `
-You are RepairMate, an AI-powered device and appliance repair assistant.
+You are RepairMate, an AI-powered device and appliance repair assistant serving users in India.
 
-Help users troubleshoot electronic devices and household appliances.
-
-You may receive information about:
-- Smartphones and tablets
-- Laptops and desktop computers
-- Headphones and earbuds
-- Smartwatches and gaming consoles
-- Washing machines and refrigerators
-- Air conditioners and ceiling fans
-- Water pumps, microwave ovens, and air coolers
-- Other electronic devices and appliances
+Help users troubleshoot electronic devices and household appliances, including smartphones, laptops, headphones, smartwatches, washing machines, refrigerators, air conditioners, fans, gaming consoles, and other devices.
 
 Follow these rules:
 
@@ -110,18 +133,27 @@ Follow these rules:
 2. Give safe, practical troubleshooting steps.
 3. Clearly explain when professional repair is necessary.
 4. Never recommend opening a device connected to electricity.
-5. Never instruct users to handle exposed wiring, capacitors,
-   refrigerants, or other hazardous components.
-6. For gas leaks, burning smells, smoke, sparks, or electrical
-   shocks, tell the user to stop using the device and seek
-   qualified professional assistance.
+5. Never instruct users to handle exposed wiring, capacitors, refrigerants, or other hazardous components.
+6. For gas leaks, burning smells, smoke, sparks, or electrical shocks, tell the user to stop using the device and seek qualified professional assistance.
 7. If an image is provided, describe only what is visibly supported.
-8. If identifying a spare part, explain its likely name, purpose,
-   and what information is needed to confirm compatibility.
-9. Do not invent exact part numbers, prices, or model compatibility.
+8. If identifying a spare part, explain its likely name, purpose, and what information is needed to confirm compatibility.
+9. Never invent exact part numbers, prices, or model compatibility.
 10. Use clear Markdown headings, numbered steps, and bullet lists.
-11. Finish with a short safety note when appropriate.
-`;
+11. Always include an Estimated Repair Cost (India) section when providing a diagnosis.
+12. Express all estimated repair prices in Indian Rupees (₹), not dollars or other currencies.
+13. Provide a realistic approximate minimum-to-maximum price range for the likely repair, such as ₹500–₹1,500, when enough information is available.
+14. When multiple faults are plausible, give separate estimated ranges for the most likely repairs.
+15. Mention whether the estimate includes parts and labour when reasonably known.
+16. If the device model or fault is unknown, clearly label the price as a rough estimate and explain that the actual cost depends on the model, replacement parts, labour, and local repair-shop rates.
+17. Never present an AI-generated estimate as a verified quotation or guaranteed price. If you cannot reasonably estimate the cost, explain why and ask for more details.
+18. Include these sections in a normal diagnosis:
+    * Likely Causes
+    * Safe Troubleshooting Steps
+    * Estimated Repair Cost (India)
+    * When Professional Repair Is Needed
+19. For spare-parts identification, provide a price estimate only when reasonably possible. Explain that compatibility must be confirmed before purchasing.
+20. Finish with a short safety note when appropriate.
+    `;
 
 // --------------------------------------------------
 // HELPER: FORMAT DEVICE DETAILS
@@ -218,9 +250,13 @@ Reported problem:
 ${problem}
 
 Please provide:
-1. Likely causes
-2. Safe troubleshooting steps
-3. When professional repair is needed
+1. Likely causes of the reported problem.
+2. Safe troubleshooting steps.
+3. Estimated Repair Cost (India), using approximate price ranges in Indian Rupees (₹).
+4. The likely repair required and whether the estimate includes parts and labour, when known.
+5. When professional repair is needed.
+
+Clearly label costs as estimates, not guaranteed quotations. Explain when the device model or additional information is needed for a more accurate estimate.
 `,
         },
       ],
@@ -565,30 +601,39 @@ app.get("/api/devices", async (req, res) => {
 
 app.post("/api/devices", async (req, res) => {
   try {
-    const { name, brand, model, category } = req.body;
+    const { category, brand, model, nickname } = req.body;
 
-    if (!name || !brand || !model) {
+    if (!category || !brand || !model) {
       return res.status(400).json({
-        error: "Name, brand, and model are required.",
+        error: "Category, brand, and model are required.",
       });
     }
 
     const [result] = await db.execute(
-      `INSERT INTO devices (name, brand, model, category)
+      `INSERT INTO devices (category, brand, model, nickname)
        VALUES (?, ?, ?, ?)`,
-      [name, brand, model, category || null]
+      [
+        category.trim(),
+        brand.trim(),
+        model.trim(),
+        nickname?.trim() || null,
+      ]
     );
 
-    res.status(201).json({
-      success: true,
-      message: "Device added successfully.",
-      id: result.insertId,
+    const [rows] = await db.execute(
+      "SELECT * FROM devices WHERE id = ?",
+      [result.insertId]
+    );
+
+    return res.status(201).json({
+      message: "Device registered successfully.",
+      device: rows[0],
     });
   } catch (error) {
-    console.error("Add device failed:", error.message);
+    console.error("Device registration error:", error);
 
-    res.status(500).json({
-      error: "Could not add device.",
+    return res.status(500).json({
+      error: "Failed to register device. Please try again.",
     });
   }
 });
@@ -693,6 +738,404 @@ app.delete("/api/history/:id", async (req, res) => {
 
     res.status(500).json({
       error: "Could not delete repair history.",
+    });
+  }
+});
+
+// --------------------------------------------------
+// MACHINE HEALTH MONITORING
+// --------------------------------------------------
+
+// POST /api/health-records
+// Upload media and analyze the device's visible condition.
+//
+// FormData:
+// device_id: registered device ID
+// checkpoint_day: 1, 7, 14, or 28
+// problem: optional description
+// media: image or video
+
+app.post(
+  "/api/health-records",
+  healthUpload.single("media"),
+  async (req, res) => {
+    let savedFilePath = null;
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: "Please upload an image or video.",
+        });
+      }
+
+      savedFilePath = req.file.path;
+
+      const deviceId = Number(req.body.device_id);
+      const checkpointDay = Number(req.body.checkpoint_day);
+      const problem = String(req.body.problem || "").trim();
+
+      if (!Number.isInteger(deviceId) || deviceId <= 0) {
+        return res.status(400).json({
+          error: "A valid device_id is required.",
+        });
+      }
+
+      if (![1, 7, 14, 28].includes(checkpointDay)) {
+        return res.status(400).json({
+          error: "checkpoint_day must be 1, 7, 14, or 28.",
+        });
+      }
+
+      const [devices] = await db.execute(
+        "SELECT * FROM devices WHERE id = ?",
+        [deviceId]
+      );
+
+      if (devices.length === 0) {
+        return res.status(404).json({
+          error: "Device not found.",
+        });
+      }
+
+      const device = devices[0];
+      const isVideo = req.file.mimetype.startsWith("video/");
+
+      let images;
+
+      if (isVideo) {
+        const videoBuffer = await fs.promises.readFile(savedFilePath);
+        images = await extractVideoFrames(videoBuffer);
+      } else {
+        images = [
+          {
+            mimetype: req.file.mimetype,
+            buffer: await fs.promises.readFile(savedFilePath),
+          },
+        ];
+      }
+
+      const imageContent = images.map((image) => ({
+        type: "image_url",
+        image_url: {
+          url: imageBufferToDataUrl(
+            image.buffer,
+            image.mimetype
+          ),
+        },
+      }));
+
+      const prompt = `
+You are analyzing a device for RepairMate's Machine Health Monitoring feature.
+
+Device category: ${device.category || "Unknown"}
+Brand: ${device.brand || "Unknown"}
+Model: ${device.model || "Unknown"}
+Checkpoint: Day ${checkpointDay}
+
+User's observations:
+${problem || "No additional observations provided."}
+
+Analyze only the visible evidence in the uploaded image or extracted video frames.
+
+Return a useful report containing:
+1. **Visible condition:** What can actually be seen?
+2. **Potential concerns:** Any visible wear, cracks, corrosion, damage, leakage, or other relevant signs.
+3. **Recommended actions:** Safe steps the user can take.
+4. **Monitoring recommendation:** What should be checked at the next checkpoint?
+5. **Limitations:** What cannot be determined from these images?
+
+Do not invent previous observations or claim a change without an earlier record to compare.
+Do not claim to analyze audio or detect sounds.
+Do not claim to determine the condition of internal components from external images alone.
+Use clear Markdown.
+`;
+
+      const completion = await groq.chat.completions.create({
+        model: VISION_MODEL,
+
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPT,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt,
+              },
+              ...imageContent,
+            ],
+          },
+        ],
+
+        temperature: 0.2,
+        max_tokens: 1800,
+      });
+
+      const observations =
+        completion.choices?.[0]?.message?.content?.trim();
+
+      if (!observations) {
+        throw new Error("AI returned an empty health report.");
+      }
+
+      const [result] = await db.execute(
+        `INSERT INTO health_records
+          (device_id, checkpoint_day, media_type, file_path, observations)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          deviceId,
+          checkpointDay,
+          isVideo ? "video" : "image",
+          savedFilePath,
+          observations,
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Health record created successfully.",
+        record: {
+          id: result.insertId,
+          device_id: deviceId,
+          checkpoint_day: checkpointDay,
+          media_type: isVideo ? "video" : "image",
+          observations,
+          created_at: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error("Create health record failed:", error.message);
+
+      // Remove the uploaded file if processing failed.
+      if (savedFilePath) {
+        await fs.promises.unlink(savedFilePath).catch(() => {});
+      }
+
+      res.status(500).json({
+        error: "Could not create health record.",
+        details:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : undefined,
+      });
+    }
+  }
+);
+
+// GET /api/health-records/:deviceId
+// Retrieve the health timeline for one device.
+
+app.get("/api/health-records/:deviceId", async (req, res) => {
+  try {
+    const deviceId = Number(req.params.deviceId);
+
+    if (!Number.isInteger(deviceId) || deviceId <= 0) {
+      return res.status(400).json({
+        error: "Invalid device ID.",
+      });
+    }
+
+    const [rows] = await db.execute(
+      `SELECT
+          id,
+          device_id,
+          checkpoint_day,
+          media_type,
+          observations,
+          created_at
+       FROM health_records
+       WHERE device_id = ?
+       ORDER BY checkpoint_day ASC, created_at ASC, id ASC`,
+      [deviceId]
+    );
+
+    res.json({
+      success: true,
+      records: rows,
+    });
+  } catch (error) {
+    console.error("Get health timeline failed:", error.message);
+
+    res.status(500).json({
+      error: "Could not retrieve health records.",
+    });
+  }
+});
+
+// GET /api/health-records/:deviceId/compare
+// Compare the latest observations from different checkpoints.
+
+app.get(
+  "/api/health-records/:deviceId/compare",
+  async (req, res) => {
+    try {
+      const deviceId = Number(req.params.deviceId);
+
+      if (!Number.isInteger(deviceId) || deviceId <= 0) {
+        return res.status(400).json({
+          error: "Invalid device ID.",
+        });
+      }
+
+      const [records] = await db.execute(
+        `SELECT
+            id,
+            device_id,
+            checkpoint_day,
+            media_type,
+            observations,
+            created_at
+         FROM health_records
+         WHERE device_id = ?
+         ORDER BY checkpoint_day ASC, created_at DESC, id DESC`,
+        [deviceId]
+      );
+
+      // Use the latest record for each checkpoint.
+      const latestByDay = new Map();
+
+      for (const record of records) {
+        if (!latestByDay.has(record.checkpoint_day)) {
+          latestByDay.set(record.checkpoint_day, record);
+        }
+      }
+
+      const checkpoints = [...latestByDay.values()].sort(
+        (a, b) => a.checkpoint_day - b.checkpoint_day
+      );
+
+      if (checkpoints.length < 2) {
+        return res.json({
+          success: true,
+          message:
+            "Upload records for at least two different checkpoints to compare observations.",
+          comparison: null,
+          checkpoints,
+        });
+      }
+
+      const comparisonPrompt = `
+You are comparing RepairMate machine health reports.
+
+Compare the following observations from different checkpoints for the same device.
+
+${checkpoints
+  .map(
+    (record) => `
+DAY ${record.checkpoint_day}:
+${record.observations}
+`
+  )
+  .join("\n")}
+
+Return:
+1. **Changes in observations:** What appears different in the written reports?
+2. **Potential deterioration:** Any concerning changes supported by the reports?
+3. **Stable observations:** What appears unchanged or cannot be assessed?
+4. **Recommended next steps:** Safe monitoring or professional inspection advice.
+
+Important:
+- You are comparing written AI observations, not directly comparing the original images.
+- Do not claim a physical change unless the reports support it.
+- State when evidence is insufficient.
+- Do not infer internal mechanical condition or audio changes.
+- Use clear Markdown.
+`;
+
+      const completion = await groq.chat.completions.create({
+        model: TEXT_MODEL,
+
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPT,
+          },
+          {
+            role: "user",
+            content: comparisonPrompt,
+          },
+        ],
+
+        temperature: 0.2,
+        max_tokens: 1500,
+      });
+
+      const comparison =
+        completion.choices?.[0]?.message?.content?.trim();
+
+      res.json({
+        success: true,
+        comparison:
+          comparison || "The AI could not generate a comparison.",
+        checkpoints,
+      });
+    } catch (error) {
+      console.error("Compare health records failed:", error.message);
+
+      res.status(500).json({
+        error: "Could not compare health records.",
+        details:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : undefined,
+      });
+    }
+  }
+);
+
+// DELETE /api/health-records/:id
+// Delete a health record and its locally stored media.
+
+app.delete("/api/health-records/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        error: "Invalid health record ID.",
+      });
+    }
+
+    const [rows] = await db.execute(
+      "SELECT id, file_path FROM health_records WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: "Health record not found.",
+      });
+    }
+
+    await db.execute(
+      "DELETE FROM health_records WHERE id = ?",
+      [id]
+    );
+
+    const storedPath = path.resolve(rows[0].file_path);
+    const uploadRoot = path.resolve(HEALTH_UPLOAD_DIR);
+
+    // Only delete files inside the dedicated health-uploads folder.
+    if (storedPath.startsWith(uploadRoot + path.sep)) {
+      await fs.promises.unlink(storedPath).catch((error) => {
+        if (error.code !== "ENOENT") {
+          console.error("Could not delete health media:", error.message);
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Health record deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete health record failed:", error.message);
+
+    res.status(500).json({
+      error: "Could not delete health record.",
     });
   }
 });

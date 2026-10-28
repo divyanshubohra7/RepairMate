@@ -1,0 +1,19 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+frontend/dist/
+backend/dist/
+
+# Uploaded files
+backend/health-uploads/
+
+# Logs
+*.log
+.DS_Store

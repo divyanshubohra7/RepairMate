@@ -1,1 +1,863 @@
 @import "tailwindcss";
+
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #182230;
+  background: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
+/* ================================
+   REPAIRMATE APP
+================================ */
+
+.repairmate-app {
+  min-height: 100vh;
+  background: #f5f7fb;
+  color: #182230;
+}
+
+/* ================================
+   SIDEBAR
+================================ */
+
+.repairmate-sidebar {
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid #e7ebf3;
+  box-shadow: 5px 0 24px rgba(31, 41, 55, 0.025);
+}
+
+.repairmate-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.repairmate-brand-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: white;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #536dfe, #7455e8);
+  box-shadow: 0 7px 16px rgba(79, 70, 229, 0.22);
+}
+
+.repairmate-brand h1 {
+  letter-spacing: -0.045em;
+}
+
+.repairmate-brand-caption {
+  margin-top: 2px;
+  color: #98a2b3;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+/* ================================
+   NAVIGATION
+================================ */
+
+.repairmate-nav-item {
+  color: #667085;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.repairmate-nav-item:hover {
+  background: #f4f6fb;
+  color: #344054;
+  transform: translateX(2px);
+}
+
+.repairmate-nav-item.is-active {
+  color: #4f46e5;
+  background: #eef2ff;
+  box-shadow: inset 3px 0 #5b5cf0;
+}
+
+/* ================================
+   MAIN CONTENT
+================================ */
+
+.repairmate-main {
+  min-width: 0;
+  padding-top: 34px;
+}
+
+.dashboard-heading {
+  margin-bottom: 30px;
+}
+
+.dashboard-eyebrow {
+  margin-bottom: 7px;
+  color: #6366f1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.dashboard-heading h2 {
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+
+.dashboard-heading .text-gray-500 {
+  color: #7b8495;
+}
+
+/* ================================
+   PRIMARY BUTTON
+================================ */
+
+.repairmate-primary-button {
+  background: linear-gradient(135deg, #536dfe, #5946df);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.2);
+  font-weight: 650;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.repairmate-primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.26);
+  filter: saturate(1.08);
+}
+
+.repairmate-primary-button:active {
+  transform: translateY(0);
+}
+
+/* ================================
+   DASHBOARD STATISTICS
+================================ */
+
+.dashboard-stats {
+  gap: 18px;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 142px;
+  border: 1px solid #e9edf5;
+  box-shadow: 0 4px 14px rgba(27, 39, 71, 0.035);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(27, 39, 71, 0.075);
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  width: 105px;
+  height: 105px;
+  border-radius: 50%;
+  right: -35px;
+  bottom: -54px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.stat-card-indigo::after {
+  background: #e5e9ff;
+}
+
+.stat-card-amber::after {
+  background: #fff0d5;
+}
+
+.stat-card-teal::after {
+  background: #d9f7ef;
+}
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.stat-icon {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.stat-card-indigo .stat-icon {
+  color: #5146e5;
+  background: #eef0ff;
+}
+
+.stat-card-amber .stat-icon {
+  color: #c47a12;
+  background: #fff4df;
+}
+
+.stat-card-teal .stat-icon {
+  color: #0f9380;
+  background: #e0f8f1;
+}
+
+.stat-label {
+  color: #778195;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.095em;
+}
+
+.stat-value {
+  position: relative;
+  z-index: 1;
+  color: #182230;
+  letter-spacing: -0.045em;
+}
+
+/* ================================
+   RECENT REPAIRS
+================================ */
+
+.recent-repairs-panel {
+  border: 1px solid #e9edf5;
+  box-shadow: 0 4px 16px rgba(27, 39, 71, 0.035);
+}
+
+.recent-heading-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: #5146e5;
+  background: #eef0ff;
+}
+
+.repairmate-text-link {
+  color: #5146e5;
+  font-weight: 650;
+  transition: color 0.2s ease;
+}
+
+.repairmate-text-link:hover {
+  color: #3730a3;
+}
+
+/* ================================
+   EMPTY STATE
+================================ */
+
+.repairmate-empty-state {
+  border: 1px dashed #e0e5ef;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfcff, #f8faff);
+}
+
+.repairmate-empty-icon {
+  width: 58px;
+  height: 58px;
+  padding: 14px;
+  border-radius: 18px;
+  color: #6366f1;
+  background: #eef0ff;
+}
+
+/* ================================
+   RESPONSIVE DESIGN
+================================ */
+
+@media (max-width: 1024px) {
+  .repairmate-main {
+    padding-top: 28px;
+  }
+
+  .stat-card {
+    min-height: 130px;
+  }
+}
+
+@media (max-width: 767px) {
+  .repairmate-app {
+    flex-direction: column;
+  }
+
+  .repairmate-sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #e7ebf3;
+    padding: 16px 18px;
+  }
+
+  .repairmate-brand {
+    margin-bottom: 16px;
+  }
+
+  .repairmate-brand-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .repairmate-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .repairmate-nav-item {
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 7px;
+    font-size: 12px;
+  }
+
+  .repairmate-nav-item:hover {
+    transform: none;
+  }
+
+  .repairmate-nav-item.is-active {
+    box-shadow: inset 0 -3px #5b5cf0;
+  }
+
+  .repairmate-main {
+    padding: 24px 16px;
+  }
+
+  .dashboard-heading h2 {
+    font-size: 26px;
+  }
+
+  .dashboard-stats {
+    gap: 14px;
+  }
+
+  .stat-card {
+    min-height: 120px;
+    padding: 20px;
+  }
+
+  .recent-repairs-panel {
+    padding: 20px;
+  }
+}
+
+/* ================================
+   ACCESSIBILITY
+================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ===== RepairMate Dashboard Upgrade ===== */
+
+.repairmate-app {
+  min-height: 100vh;
+  background: #f5f7fc;
+  color: #172033;
+}
+
+/* Sidebar */
+.repairmate-sidebar {
+  background: #ffffff;
+  border-color: #e6eaf2;
+  box-shadow: 4px 0 20px rgba(30, 41, 59, 0.025);
+}
+
+.repairmate-sidebar h1 {
+  letter-spacing: -1px;
+  color: #172033;
+}
+
+.repairmate-sidebar nav button {
+  font-weight: 550;
+  transition: all 0.2s ease;
+}
+
+.repairmate-sidebar nav button:hover {
+  transform: translateX(2px);
+}
+
+.repairmate-sidebar nav button.bg-blue-50 {
+  background: #eef2ff;
+  color: #4f46e5;
+  box-shadow: inset 3px 0 #6366f1;
+}
+
+/* Main dashboard */
+.repairmate-main {
+  background: #f5f7fc;
+}
+
+.repairmate-main h2 {
+  letter-spacing: -1.2px;
+}
+
+.repairmate-main > div:first-child {
+  margin-bottom: 32px;
+}
+
+/* Primary buttons */
+.repairmate-main button.bg-blue-600 {
+  background: linear-gradient(135deg, #536dfe, #5145cd);
+  border: none;
+  box-shadow: 0 5px 12px rgba(79, 70, 229, 0.16);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.repairmate-main button.bg-blue-600:hover {
+  background: linear-gradient(135deg, #465cf0, #4438b8);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.23);
+  transform: translateY(-1px);
+}
+
+/* Statistics cards */
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e6eaf3;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.035);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(30, 41, 59, 0.075);
+}
+
+/* Coloured top accents */
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div:nth-child(1) {
+  border-top: 3px solid #6366f1;
+}
+
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div:nth-child(2) {
+  border-top: 3px solid #f0ad4e;
+}
+
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div:nth-child(3) {
+  border-top: 3px solid #14b8a6;
+}
+
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div p {
+  font-size: 13px;
+  font-weight: 550;
+  color: #737e91;
+}
+
+.repairmate-main .grid.grid-cols-1.sm\:grid-cols-3 > div h3 {
+  color: #172033;
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+
+/* Recent repairs panel */
+.repairmate-main > section {
+  border: 1px solid #e6eaf3;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 4px 15px rgba(30, 41, 59, 0.035);
+}
+
+.repairmate-main > section h3 {
+  letter-spacing: -0.4px;
+}
+
+/* Recent repairs empty state */
+.repairmate-main > section > div.text-center {
+  margin-top: 12px;
+  padding: 48px 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafbff, #f7f8ff);
+}
+
+.repairmate-main > section > div.text-center svg {
+  color: #818cf8;
+}
+
+/* View all link */
+.repairmate-main > section button.text-blue-600 {
+  color: #5146e5;
+  font-weight: 600;
+}
+
+/* Responsive spacing */
+@media (max-width: 767px) {
+  .repairmate-sidebar {
+    width: 100%;
+  }
+
+  .repairmate-main {
+    padding: 22px 16px;
+  }
+
+  .repairmate-main h2 {
+    letter-spacing: -0.7px;
+  }
+}
+
+/* =========================================
+   REPAIRMATE PREMIUM DASHBOARD
+   ========================================= */
+
+.repairmate-app {
+  background: #f5f7fc;
+  color: #172033;
+}
+
+.repairmate-main {
+  background:
+    radial-gradient(
+      ellipse at top right,
+      rgba(99, 102, 241, 0.055),
+      transparent 35%
+    ),
+    #f5f7fc;
+}
+
+/* Primary action */
+
+.dashboard-primary-button {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  box-shadow: 0 5px 14px rgba(79, 70, 229, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 22px rgba(79, 70, 229, 0.27);
+}
+
+/* Statistics cards */
+
+.dashboard-stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border: 1px solid #e8eaf3;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 3px 12px rgba(30, 41, 59, 0.035);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.dashboard-stat-card::after {
+  position: absolute;
+  right: -32px;
+  bottom: -45px;
+  width: 115px;
+  height: 115px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.035);
+  content: "";
+  pointer-events: none;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(30, 41, 59, 0.075);
+}
+
+.dashboard-icon {
+  display: flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 15px;
+}
+
+.dashboard-icon-indigo {
+  background: #eef2ff;
+  color: #5955df;
+}
+
+.dashboard-icon-amber {
+  background: #fff5e5;
+  color: #d99020;
+}
+
+.dashboard-icon-emerald {
+  background: #e8faf3;
+  color: #109b73;
+}
+
+/* Recent repairs panel */
+
+.dashboard-panel {
+  padding: 26px;
+  border: 1px solid #e6eaf3;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(30, 41, 59, 0.035);
+}
+
+/* View all */
+
+.dashboard-view-all {
+  color: #5146e5;
+  transition: background 0.2s ease;
+}
+
+.dashboard-view-all:hover {
+  background: #f1f0ff;
+}
+
+/* Empty state */
+
+.dashboard-empty-state {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  border: 1px dashed #dce1f0;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fafaff, #f6f7ff);
+  text-align: center;
+}
+
+.dashboard-empty-icon {
+  display: flex;
+  width: 68px;
+  height: 68px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e1e5ff;
+  border-radius: 21px;
+  background: #eeefff;
+  color: #6158e8;
+  box-shadow: 0 7px 18px rgba(99, 102, 241, 0.08);
+}
+
+.dashboard-secondary-button {
+  border: 1px solid #dfe2ff;
+  background: #ffffff;
+  color: #5146e5;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-secondary-button:hover {
+  transform: translateY(-1px);
+  background: #f0efff;
+}
+
+/* Quick actions */
+
+.dashboard-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px;
+  border: 1px solid #e5e7fb;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #ffffff, #f0f1ff);
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.025);
+}
+
+.dashboard-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #e1e5f5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 0.2s ease, background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dashboard-action-button:hover {
+  transform: translateY(-2px);
+  border-color: #c7c8ff;
+  background: #f8f8ff;
+  color: #5146e5;
+}
+
+/* Existing repair cards */
+
+.repairmate-main article.bg-white.rounded-xl {
+  border-color: #e8eaf3;
+  border-radius: 16px;
+}
+
+/* Mobile layout */
+
+@media (max-width: 767px) {
+  .dashboard-panel {
+    padding: 18px;
+  }
+
+  .dashboard-stat-card {
+    padding: 20px;
+  }
+
+  .dashboard-quick-actions {
+    padding: 20px;
+  }
+
+  .dashboard-empty-state {
+    min-height: 240px;
+    padding: 26px 16px;
+  }
+}
+
+/* =========================================
+REPAIRMATE — PREMIUM BLUE SIDEBAR
+========================================= */
+
+.repairmate-sidebar {
+position: relative;
+background: linear-gradient(
+180deg,
+#263fc7 0%,
+#2539b5 55%,
+#202f9e 100%
+);
+border-right: 1px solid rgba(255, 255, 255, 0.12);
+box-shadow: 5px 0 24px rgba(28, 43, 120, 0.12);
+color: #ffffff;
+}
+
+/* Sidebar brand */
+
+.repairmate-sidebar h1 {
+color: #ffffff !important;
+letter-spacing: -1px;
+}
+
+/* Navigation buttons */
+
+.repairmate-sidebar nav button {
+color: rgba(255, 255, 255, 0.82);
+font-weight: 550;
+border: 1px solid transparent;
+transition:
+background 0.2s ease,
+color 0.2s ease,
+transform 0.2s ease,
+border-color 0.2s ease;
+}
+
+/* Navigation icons */
+
+.repairmate-sidebar nav button svg {
+color: inherit;
+flex-shrink: 0;
+}
+
+/* Hover effect */
+
+.repairmate-sidebar nav button:hover {
+color: #ffffff;
+background: rgba(255, 255, 255, 0.11);
+border-color: rgba(255, 255, 255, 0.08);
+transform: translateX(3px);
+}
+
+/* Active navigation item */
+
+.repairmate-sidebar nav button.bg-blue-50 {
+color: #ffffff !important;
+background: rgba(255, 255, 255, 0.17) !important;
+border-color: rgba(255, 255, 255, 0.13);
+box-shadow:
+inset 3px 0 #a5b4fc,
+0 4px 12px rgba(15, 23, 80, 0.12);
+}
+
+/* Active item hover */
+
+.repairmate-sidebar nav button.bg-blue-50:hover {
+background: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Keyboard accessibility */
+
+.repairmate-sidebar nav button:focus-visible {
+outline: 2px solid #c7d2fe;
+outline-offset: 3px;
+}
+
+/* Mobile sidebar */
+
+@media (max-width: 767px) {
+.repairmate-sidebar {
+border-right: none;
+border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+box-shadow: 0 5px 18px rgba(28, 43, 120, 0.12);
+}
+
+.repairmate-sidebar nav button:hover {
+transform: none;
+}
+
+.repairmate-sidebar nav button.bg-blue-50 {
+box-shadow: inset 0 -3px #a5b4fc;
+}
+}

@@ -1,5 +1,9 @@
+import { t } from "./i18n/translations";
 import { useCallback, useEffect, useState } from "react";
 import {
+  Activity,
+  CheckCircle2,
+  Sparkles,
   Wrench,
   Home,
   Smartphone,
@@ -18,14 +22,15 @@ import {
   Gamepad2,
   Monitor,
   X,
+  Store,
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import ReportIssue from "./components/ReportIssue";
-
-const API_URL = "http://localhost:5000/api";
+import MachineHealth from "./components/MachineHealth";
+const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api`;
 
 function App() {
   // My Devices state
@@ -48,6 +53,16 @@ const [deviceForm, setDeviceForm] = useState({
   model: "",
   nickname: "",
 });
+const [language, setLanguage] = useState(
+  () => localStorage.getItem("repairmate-language") || "en"
+);
+
+const changeLanguage = (newLanguage) => {
+  setLanguage(newLanguage);
+  localStorage.setItem("repairmate-language", newLanguage);
+};
+
+const translate = (key) => t(language, key);
 
 const deviceCategories = {
   Smartphone: [
@@ -90,7 +105,13 @@ const fetchDevices = async () => {
       throw new Error(data.error || "Unable to load devices.");
     }
 
-    setDevices(data.devices || []);
+    setDevices(
+  Array.isArray(data)
+    ? data
+    : Array.isArray(data.devices)
+      ? data.devices
+      : []
+);
   } catch (err) {
     console.error("Fetch devices error:", err);
     setDevicesError(
@@ -406,11 +427,11 @@ const getDeviceIcon = (category) => {
 );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="repairmate-app min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-white border-r p-6">
+      <aside className="repairmate-sidebar w-64 shrink-0 p-6">
         <h1 className="text-2xl font-bold mb-8 text-gray-900">
-          RepairMate
+          {translate("appName")}
         </h1>
 
         <nav className="space-y-3">
@@ -423,7 +444,7 @@ const getDeviceIcon = (category) => {
             }`}
           >
             <Home size={20} />
-            Dashboard
+            {translate("dashboard")}
           </button>
 
           <button
@@ -435,7 +456,7 @@ const getDeviceIcon = (category) => {
             }`}
           >
             <Smartphone size={20} />
-            My Devices
+            {translate("myDevices")}
           </button>
 
           <button
@@ -447,127 +468,330 @@ const getDeviceIcon = (category) => {
             }`}
           >
             <History size={20} />
-            Repair History
+            {translate("repairHistory")}
           </button>
+          <button
+  onClick={() => {
+    setPage("health");
+    fetchDevices();
+  }}
+  className={`flex w-full items-center gap-3 rounded-lg p-3 ${
+    page === "health"
+      ? "bg-blue-50 text-blue-600"
+      : "hover:bg-gray-100"
+  }`}
+>
+  <Activity size={20} />
+  {translate("machineHealth")}
+</button>
+<button
+  onClick={() => setPage("stores")}
+  className={`flex w-full items-center gap-3 rounded-lg p-3 ${
+    page === "stores"
+      ? "bg-blue-50 text-blue-600"
+      : "hover:bg-gray-100"
+  }`}
+>
+  <Store size={20} />
+  Stores Near Me
+</button>
         </nav>
+        <div className="border-t border-gray-200 p-4 dark:border-gray-700">
+  <label
+    htmlFor="repairmate-language"
+    className="mb-2 block text-sm font-medium"
+  >
+    {translate("language")}
+  </label>
+
+  <select
+    id="repairmate-language"
+    value={language}
+    onChange={(e) => changeLanguage(e.target.value)}
+    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+  >
+    <option value="en">🇬🇧 English</option>
+    <option value="hi">🇮🇳 हिन्दी</option>
+    <option value="kn">🟡 ಕನ್ನಡ</option>
+  </select>
+</div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 p-5 md:p-8">
-        {/* Dashboard */}
+      <main className="repairmate-main flex-1 min-w-0 p-5 md:p-8">
+                {/* Premium Dashboard */}
         {page === "dashboard" && (
-          <>
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+          <div className="space-y-8">
+            {/* Welcome Header */}
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-gray-800">
-                  Welcome to RepairMate 👋
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                    {translate("deviceCareHub")}
+                  </span>
+                  <Sparkles size={15} className="text-indigo-500" />
+                </div>
+
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                  {translate("welcome")}
+                  <span className="ml-2 inline-block">👋</span>
                 </h2>
 
-                <p className="text-gray-500 mt-1">
-                  Diagnose and manage your device problems.
+                <p className="mt-2 text-sm leading-6 text-slate-500 md:text-base">
+                  {translate("dashboardSubtitle")}
                 </p>
               </div>
 
               <button
                 onClick={() => setPage("report")}
-                className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700"
+                className="dashboard-primary-button inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white"
               >
-                <Plus size={20} />
-                Report Issue
+                <Plus size={19} />
+                {translate("reportIssueButton")}
               </button>
             </div>
 
-            {/* Statistics based on saved repair records */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <p className="text-gray-500">Saved Diagnoses</p>
+            {/* Dashboard Statistics */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {/* Saved Diagnoses */}
+              <article className="dashboard-stat-card group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {translate("savedDiagnoses")}
+                    </p>
 
-                <h3 className="text-3xl font-bold mt-2">
-                  {repairs.length}
-                </h3>
-              </div>
+                    <h3 className="mt-4 text-4xl font-bold tracking-tight text-slate-900">
+                      {repairs.length}
+                    </h3>
+                  </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <p className="text-gray-500">Active Repairs</p>
+                  <div className="dashboard-icon dashboard-icon-indigo">
+                    <Wrench size={23} />
+                  </div>
+                </div>
 
-                <h3 className="text-3xl font-bold mt-2">
-                  {
-                    repairs.filter(
-                      (repair) =>
-                        repair.status?.toLowerCase() === "in progress"
-                    ).length
-                  }
-                </h3>
-              </div>
+                <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-4">
+                  <span className="text-xs font-semibold text-indigo-600">
+                    {translate("aiPowered")}
+                  </span>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <p className="text-gray-500">Completed Repairs</p>
+                  <span className="text-xs text-slate-400">
+                    {translate("diagnosisRecords")}
+                  </span>
+                </div>
+              </article>
 
-                <h3 className="text-3xl font-bold mt-2">
-                  {
-                    repairs.filter(
-                      (repair) =>
-                        repair.status?.toLowerCase() === "completed"
-                    ).length
-                  }
-                </h3>
-              </div>
+              {/* Active Repairs */}
+              <article className="dashboard-stat-card group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {translate("activeRepairs")}
+                    </p>
+
+                    <h3 className="mt-4 text-4xl font-bold tracking-tight text-slate-900">
+                      {
+                        repairs.filter(
+                          (repair) =>
+                            repair.status?.toLowerCase() === "in progress"
+                        ).length
+                      }
+                    </h3>
+                  </div>
+
+                  <div className="dashboard-icon dashboard-icon-amber">
+                    <Activity size={23} />
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-4">
+                  <span className="text-xs font-semibold text-amber-600">
+                    {translate("inProgress")}
+                  </span>
+
+                  <span className="text-xs text-slate-400">
+                    {translate("repairsTracked")}
+                  </span>
+                </div>
+              </article>
+
+              {/* Completed Repairs */}
+              <article className="dashboard-stat-card group sm:col-span-2 xl:col-span-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {translate("completedRepairs")}
+                    </p>
+
+                    <h3 className="mt-4 text-4xl font-bold tracking-tight text-slate-900">
+                      {
+                        repairs.filter(
+                          (repair) =>
+                            repair.status?.toLowerCase() === "completed"
+                        ).length
+                      }
+                    </h3>
+                  </div>
+
+                  <div className="dashboard-icon dashboard-icon-emerald">
+                    <CheckCircle2 size={23} />
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-4">
+                  <span className="text-xs font-semibold text-emerald-600">
+                    {translate("completed")}
+                  </span>
+
+                  <span className="text-xs text-slate-400">
+                    {translate("repairsFinished")}
+                  </span>
+                </div>
+              </article>
             </div>
 
             {/* Recent Repairs */}
-            <section className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
+            <section className="dashboard-panel">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <Wrench size={22} />
+                  <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600">
+                    <Wrench size={21} />
+                  </div>
 
-                  <h3 className="text-xl font-semibold">
-                    Recent Repairs
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {translate("recentRepairs")}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      {translate("recentRepairsSubtitle")}
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   onClick={openHistory}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  className="dashboard-view-all inline-flex items-center justify-center gap-2 self-start rounded-lg px-3 py-2 text-sm font-semibold sm:self-auto"
                 >
-                  View all
+                  {translate("viewAll")}
+                  <ArrowLeft
+                    size={15}
+                    className="rotate-180"
+                  />
                 </button>
               </div>
 
-              {loading && (
-                <p className="text-gray-500 py-4">
-                  Loading repairs...
-                </p>
-              )}
+              <div className="mt-6">
+                {loading && (
+                  <div className="dashboard-empty-state">
+                    <RefreshCw
+                      size={27}
+                      className="mx-auto mb-3 animate-spin text-indigo-500"
+                    />
 
-              {!loading && error && (
-                <div className="flex items-start gap-2 text-red-600 py-3">
-                  <AlertCircle size={20} className="shrink-0" />
-                  <p>{error}</p>
-                </div>
-              )}
+                    <p className="font-medium text-slate-700">
+                      {translate("loadingRepairs")}
+                    </p>
+                  </div>
+                )}
 
-              {!loading && !error && repairs.length === 0 && (
-                <div className="text-center py-10">
-                  <Wrench
-                    size={38}
-                    className="mx-auto text-gray-300 mb-3"
-                  />
+                {!loading && error && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 p-5">
+                    <div className="flex items-start gap-3 text-red-700">
+                      <AlertCircle size={21} className="mt-0.5 shrink-0" />
 
-                  <p className="text-gray-600 font-medium">
-                    No repairs yet
-                  </p>
+                      <div>
+                        <p className="font-semibold">
+                          {translate("unableLoadRepairs")}
+                        </p>
 
-                  <p className="text-gray-400 text-sm mt-1">
-                    Submit a device problem to generate your first diagnosis.
-                  </p>
-                </div>
-              )}
+                        <p className="mt-1 text-sm">
+                          {error}
+                        </p>
 
-              {!loading &&
-                !error &&
-                repairs.slice(0, 3).map(renderRepairCard)}
+                        <button
+                          onClick={fetchHistory}
+                          className="mt-3 text-sm font-semibold underline"
+                        >
+                          {translate("tryAgain")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!loading && !error && repairs.length === 0 && (
+                  <div className="dashboard-empty-state">
+                    <div className="dashboard-empty-icon">
+                      <Wrench size={29} />
+                    </div>
+
+                    <h4 className="mt-5 text-lg font-semibold text-slate-800">
+                      {translate("workspaceReady")}
+                    </h4>
+
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                      Start by reporting a device problem. RepairMate will
+                      generate an AI-assisted diagnosis that you can save
+                      and revisit later.
+                    </p>
+
+                    <button
+                      onClick={() => setPage("report")}
+                      className="dashboard-secondary-button mt-5 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
+                    >
+                      <Plus size={17} />
+                      Diagnose your first issue
+                    </button>
+                  </div>
+                )}
+
+                {!loading && !error && repairs.length > 0 && (
+                  <div className="space-y-4">
+                    {repairs.slice(0, 3).map(renderRepairCard)}
+                  </div>
+                )}
+              </div>
             </section>
-          </>
+
+            {/* Quick Actions */}
+            <section className="dashboard-quick-actions">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+                  {translate("quickAccess")}
+                </p>
+
+                <h3 className="mt-2 text-lg font-bold text-slate-900">
+                  {translate("manageDevices")}
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {translate("manageDevicesDescription")}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={openDevices}
+                  className="dashboard-action-button"
+                >
+                  <Smartphone size={19} />
+                  {translate("myDevices")}
+                  <ArrowLeft size={15} className="rotate-180" />
+                </button>
+
+                <button
+                  onClick={openHistory}
+                  className="dashboard-action-button"
+                >
+                  <History size={19} />
+                  Repair History
+                  <ArrowLeft size={15} className="rotate-180" />
+                </button>
+              </div>
+            </section>
+          </div>
         )}
 
         {/* Repair History */}
@@ -728,7 +952,7 @@ const getDeviceIcon = (category) => {
               Back to Dashboard
             </button>
 
-            <ReportIssue />
+            <ReportIssue language={language} />
           </>
         )}
 
@@ -746,7 +970,7 @@ const getDeviceIcon = (category) => {
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 className="text-3xl font-bold text-gray-800">
-          My Devices
+          {translate("myDevices")}
         </h2>
 
         <p className="mt-2 text-gray-500">
@@ -787,13 +1011,13 @@ const getDeviceIcon = (category) => {
         className="mb-8 space-y-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
       >
         <h3 className="text-xl font-semibold text-gray-800">
-          Register a New Device
+          {translate("registerNewDevice")}
         </h3>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Device Category
+              {translate("deviceCategoryLabel")}
             </label>
 
             <select
@@ -836,7 +1060,7 @@ const getDeviceIcon = (category) => {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Device Model
+              {translate("deviceModel")}
             </label>
 
             <input
@@ -857,7 +1081,7 @@ const getDeviceIcon = (category) => {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Nickname (Optional)
+              {translate("nicknameOptional")}
             </label>
 
             <input
@@ -891,14 +1115,14 @@ const getDeviceIcon = (category) => {
     {devicesLoading ? (
       <div className="rounded-xl bg-white p-12 text-center text-gray-500">
         <RefreshCw size={28} className="mx-auto mb-3 animate-spin" />
-        Loading your devices...
+        {translate("loadingDevices")}
       </div>
     ) : devices.length === 0 ? (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
         <Smartphone size={48} className="mx-auto mb-4 text-gray-300" />
 
         <h3 className="text-xl font-semibold text-gray-800">
-          No devices registered yet
+          {translate("noDevicesTitle")}
         </h3>
 
         <p className="mx-auto mt-2 max-w-md text-gray-500">
@@ -911,7 +1135,7 @@ const getDeviceIcon = (category) => {
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
         >
           <Plus size={19} />
-          Add Your First Device
+          {translate("addFirstDevice")}
         </button>
       </div>
     ) : (
@@ -985,6 +1209,48 @@ const getDeviceIcon = (category) => {
       </>
     )}
   </>
+)}
+{/* Machine Health Monitoring */}
+{page === "health" && (
+  <MachineHealth
+  devices={devices}
+  onBack={openDashboard}
+  language={language}
+/>
+)}
+{/* Stores Near Me */}
+{page === "stores" && (
+  <section>
+    <button
+      onClick={openDashboard}
+      className="mb-6 flex items-center gap-2 text-gray-600 hover:text-blue-600"
+    >
+      <ArrowLeft size={20} />
+      Back to Dashboard
+    </button>
+
+    <div className="mb-8">
+      <h2 className="text-3xl font-bold text-gray-800">
+        Stores Near Me
+      </h2>
+
+      <p className="mt-2 text-gray-500">
+        Find nearby device repair stores.
+      </p>
+    </div>
+
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
+      <Store size={48} className="mx-auto mb-4 text-gray-300" />
+
+      <h3 className="text-xl font-semibold text-gray-800">
+        No registered stores
+      </h3>
+
+      <p className="mt-2 text-gray-500">
+        There are currently no registered stores to display.
+      </p>
+    </div>
+  </section>
 )}
       </main>
     </div>
